@@ -128,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
 
     selected = {args.demo: demos[args.demo]} if args.demo else demos
     output_dir = args.output_dir.absolute()
+    if output_dir.exists() and not output_dir.is_dir():
+        raise SystemExit(f"Error: Output path is not a directory: {output_dir}")
 
     if args.dry_run:
         for props_path in selected.values():

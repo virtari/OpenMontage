@@ -68,6 +68,25 @@ class DemoCommandTests(unittest.TestCase):
         self.assertIn("alpha", output)
         self.assertFalse(destination.exists())
 
+    def test_existing_file_as_output_directory_fails_before_setup(self):
+        destination = self.root / "keep.mp4"
+        destination.write_bytes(b"existing user file")
+        for args in (["alpha"], ["--dry-run", "alpha"]):
+            with self.subTest(args=args):
+                with self.assertRaisesRegex(SystemExit, "not a directory"):
+                    self.run_preview(*args, "--output-dir", str(destination))
+                self.assertEqual(destination.read_bytes(), b"existing user file")
+        self.assertFalse(self.output.exists())
+
+    def test_render_creates_the_selected_nested_output_directory(self):
+        destination = self.root / "new dir" / "out"
+        with patch.object(render_demo, "ensure_demo_environment", return_value="npx"):
+            with patch.object(render_demo.subprocess, "run", return_value=None):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(render_demo.main(["alpha", "--output-dir", str(destination)]), 0)
+        self.assertTrue(destination.is_dir())
+        self.assertFalse(self.output.exists())
+
     def test_render_passes_spaced_output_as_one_argument_and_keeps_existing_files(self):
         destination = self.root / "render output"
         destination.mkdir()
