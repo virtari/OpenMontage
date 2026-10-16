@@ -125,6 +125,14 @@ python3 render_demo.py --dry-run
 
 With a name, `--dry-run` previews one demo; without a name, it previews all demos. It checks that each props file contains a nonempty `cuts` list. It does not install dependencies, start a renderer, create output directories, or write videos, and needs only the Python standard library. It does not verify that a video can render successfully. Running without `--list` or `--dry-run` uses the normal render path and can install Remotion dependencies and write videos.
 
+To choose where demo videos will be written, use `--output-dir`:
+
+```bash
+python3 render_demo.py --dry-run code-to-screen --output-dir "./my demo renders"
+```
+
+The default remains `projects/demos/renders` inside the repository. A relative path is based on the directory where you run the command; an absolute path is used as supplied. Quote paths containing spaces. `--list` and `--dry-run` do not create the chosen directory. For a real render, omit `--dry-run`; the output directory is created when rendering starts. This option does not delete or move existing files. The renderer still writes the selected demo's `<name>.mp4`, so choose a new directory if you want to keep an earlier render with the same name.
+
 ### Prerequisites
 
 - **Python 3.10+** — [python.org](https://www.python.org/downloads/)

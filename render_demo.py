@@ -61,10 +61,10 @@ def validate_props_file(path: Path) -> None:
         raise SystemExit(f"Error: {path} must define at least one cut.")
 
 
-def render_demo(name: str, props_path: Path, npx_cmd: str) -> None:
+def render_demo(name: str, props_path: Path, npx_cmd: str, output_dir: Path) -> None:
     validate_props_file(props_path)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT_DIR / f"{name}.mp4"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f"{name}.mp4"
 
     print()
     print(f"Rendering: {name}")
@@ -105,6 +105,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--dry-run", action="store_true", help="Validate and preview selected demos without setup or rendering."
     )
+    parser.add_argument(
+        "--output-dir", type=Path, default=OUTPUT_DIR,
+        help="Output directory; relative paths start from the current working directory."
+    )
     args = parser.parse_args(argv)
 
     demos = discover_demos()
@@ -123,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
         raise SystemExit(f"Unknown demo '{args.demo}'. Available demos: {available}")
 
     selected = {args.demo: demos[args.demo]} if args.demo else demos
+    output_dir = args.output_dir.absolute()
 
     if args.dry_run:
         for props_path in selected.values():
@@ -131,12 +136,12 @@ def main(argv: list[str] | None = None) -> int:
         for name, props_path in selected.items():
             print(f"Demo:   {name}")
             print(f"Props:  {props_path}")
-            print(f"Output: {OUTPUT_DIR / f'{name}.mp4'}")
+            print(f"Output: {output_dir / f'{name}.mp4'}")
         return 0
 
     npx_cmd = ensure_demo_environment()
     for name, props_path in selected.items():
-        render_demo(name, props_path, npx_cmd)
+        render_demo(name, props_path, npx_cmd, output_dir)
 
     return 0
 
