@@ -22,7 +22,7 @@ Aja repon juuresta olemassa olevalla jsdom-asennuksella:
 NODE_PATH=/polku/olemassa-olevaan/node_modules node --test docs/pilot/sau-4/prototype.test.cjs
 ```
 
-Paikallisessa pilotissa moduulihakemisto on `paperclip-local-pilot/runtime/node_modules`. Testit tarkistavat valinnat, haun, tyhjän tilan, palautuksen, tuloksen nollauksen, simulaation, verkko-operaatioiden puuttumisen, kontrollien nimet, tilailmoituksen, sisällön suojauskäytännön hashit ja määritetyn tekstiväripaletin kontrastit.
+Paikallisessa pilotissa moduulihakemisto on `paperclip-local-pilot/runtime/node_modules`. Testit tarkistavat valinnat, haun, tyhjän tilan, palautuksen, tuloksen nollauksen, simulaation, verkko- ja tallennusoperaatioiden puuttumisen, kontrollien nimet, tilailmoituksen, sisällön suojauskäytännön hashit ja määritetyn tekstiväripaletin kontrastit.
 
 jsdom ei piirrä sivua eikä varmista selaimen CSP-toteutusta, näppäimistön oletustoimintoja, mobiiliasettelua tai ruudunlukijan käyttäytymistä. Näitä testejä ei kutsuta selain- tai saavutettavuusauditoinniksi.
 

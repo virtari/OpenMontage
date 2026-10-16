@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-0t/HFaZuctK3jEtKNa87GK/bx7IjtDg0Y9r+8mkmJDU='; script-src 'sha256-4EUScZIhDh769k6AxY8Z5akNsthJIIkeF3WSLXYjvzA='; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'sha256-J0+slOY4dXU+F/XAL1mWYwog/cTyfoXI9KFLdhsrxnQ='; script-src 'sha256-/2DJh97oe+61qTKrB4QqbrpSQlxvY803ziPtB2VFnfc='; connect-src 'none'; base-uri 'none'; form-action 'none'">
   <title>OpenMontage · Demojen työpöytä · Paikallinen prototyyppi</title>
   <style>
     :root {
@@ -15,6 +15,8 @@
       --green: #245d48;
       --soft: #e6eee7;
       --focus: #8b5107;
+      --sidebar: #fbfcfa;
+      --preview: #eff2ed;
     }
     * { box-sizing: border-box; }
     [hidden] { display: none !important; }
@@ -35,12 +37,13 @@
     .notice { margin: 0; padding: 13px 20px; background: var(--soft); color: var(--green); font-size: 14px; border-bottom: 1px solid var(--line); }
     .app { background: var(--white); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
     .desk { display: grid; grid-template-columns: 280px minmax(0, 1fr); }
-    .sidebar { padding: 24px 18px; background: #fbfcfa; border-right: 1px solid var(--line); }
+    .sidebar { padding: 24px 18px; background: var(--sidebar); border-right: 1px solid var(--line); }
     label { display: block; margin-bottom: 7px; font-weight: 650; font-size: 14px; }
     input { width: 100%; min-height: 44px; padding: 9px 11px; border: 1px solid var(--muted); border-radius: 7px; color: var(--ink); background: var(--white); }
+    input::placeholder { color: var(--muted); opacity: 1; }
     .count { margin: 14px 3px 10px; color: var(--muted); font-size: 13px; }
     ul { list-style: none; padding: 0; margin: 0; }
-    li + li { margin-top: 8px; }
+    #demo-list { display: grid; gap: 8px; }
     .demo { display: block; text-align: left; width: 100%; padding: 14px 12px; min-height: 72px; color: var(--ink); border: 1px solid transparent; border-radius: 9px; background: transparent; }
     .demo[aria-pressed="true"] { background: var(--soft); border-color: var(--green); }
     .demo strong, .demo span { display: block; }
@@ -50,7 +53,7 @@
     .tag { display: inline-block; font: 13px/1.4 ui-monospace, monospace; color: var(--muted); border: 1px solid var(--line); padding: 5px 8px; border-radius: 5px; overflow-wrap: anywhere; }
     h2 { font-size: 28px; line-height: 1.2; letter-spacing: -.03em; margin: 16px 0 10px; }
     .description { margin: 0; color: var(--muted); }
-    .preview { background: #eff2ed; border: 1px dashed var(--muted); border-radius: 9px; padding: 24px 18px; text-align: center; margin: 24px 0; }
+    .preview { background: var(--preview); border: 1px dashed var(--muted); border-radius: 9px; padding: 24px 18px; text-align: center; margin: 24px 0; }
     .preview strong { display: block; font-size: 15px; }
     .preview p { color: var(--muted); margin: 6px 0 0; font-size: 14px; }
     .next { border-top: 1px solid var(--line); padding-top: 20px; }
@@ -94,7 +97,7 @@
     <div class="app">
       <p class="notice"><strong>Suunnittelukoe:</strong> kaikki tarkistukset ovat simuloituja. Videoita ei renderöidä eikä tiedostoja lueta tai muuteta.</p>
       <div class="desk">
-        <nav class="sidebar" aria-label="Demojen valinta">
+        <section class="sidebar" aria-label="Demojen valinta">
           <label for="search">Hae demo</label>
           <input id="search" type="search" placeholder="Nimi tai sisältötyyppi" autocomplete="off" disabled>
           <p id="count" class="count">3 demoa</p>
@@ -103,7 +106,7 @@
             <li><button class="demo" type="button" data-demo="focusflow-pitch" aria-pressed="false" disabled><strong>FocusFlow Pitch</strong><span>Tuotteen pitch-esitys</span></button></li>
             <li><button class="demo" type="button" data-demo="world-in-numbers" aria-pressed="false" disabled><strong>World in Numbers</strong><span>Tilastot ja kaaviot</span></button></li>
           </ul>
-        </nav>
+        </section>
         <div class="detail">
           <section id="empty-state" class="empty" aria-labelledby="empty-title" hidden>
             <h2 id="empty-title">Ei hakuun sopivia demoja.</h2><p>Kokeile toista nimeä tai tyhjennä haku, niin näet kaikki kolme esimerkkiä.</p><button id="clear-search" class="secondary" type="button">Tyhjennä haku</button>
@@ -131,20 +134,24 @@
       const demos = {
         'code-to-screen': {
           title: 'Code to Screen',
+          kind: 'Kehittäjän työnkulku',
           description: 'Kehittäjän työnkulun esittely: vertailuja, vaiheita ja KPI-kortteja.'
         },
         'focusflow-pitch': {
           title: 'FocusFlow Pitch',
+          kind: 'Tuotteen pitch-esitys',
           description: 'Tuotteen pitch-esitys, joka rakentuu Remotion-komponenteista.'
         },
         'world-in-numbers': {
           title: 'World in Numbers',
+          kind: 'Tilastot ja kaaviot',
           description: 'Otsikoita, tilastolukuja ja kaavioita havainnollistava esimerkki.'
         }
       };
       const $ = id => document.getElementById(id);
       const buttons = [...document.querySelectorAll('[data-demo]')];
       let selected = 'code-to-screen';
+      let checkNumber = 0;
 
       function select(id) {
         if (selected !== id) $('result').hidden = true;
@@ -161,6 +168,7 @@
 
       buttons.forEach(button => {
         button.disabled = false;
+        button.querySelector('span').textContent = demos[button.dataset.demo].kind;
         button.addEventListener('click', () => {
           select(button.dataset.demo);
           $('announcement').textContent = `Valittu demo: ${demos[selected].title}.`;
@@ -168,17 +176,21 @@
       });
       $('search').disabled = false;
       $('search').addEventListener('input', () => {
+        const previousSelection = selected;
+        const hadResult = !$('result').hidden;
         const query = $('search').value.trim().toLocaleLowerCase('fi');
         const visible = buttons.filter(button => {
           const demo = demos[button.dataset.demo];
-          const matches = `${demo.title} ${demo.description} ${button.dataset.demo}`.toLocaleLowerCase('fi').includes(query);
+          const matches = `${demo.title} ${demo.kind} ${demo.description} ${button.dataset.demo}`.toLocaleLowerCase('fi').includes(query);
           button.parentElement.hidden = !matches;
           return matches;
         });
         const count = visible.length === 1 ? '1 demo' : `${visible.length} demoa`;
         $('count').textContent = count;
         if (!visible.some(button => button.dataset.demo === selected)) select(visible[0]?.dataset.demo ?? null);
-        $('announcement').textContent = `${count} vastaa hakua.`;
+        const selection = selected ? `Valittu demo: ${demos[selected].title}.` : 'Ei valittua demoa.';
+        const cleared = hadResult && previousSelection !== selected ? ' Aiempi simuloitu tulos tyhjennetty.' : '';
+        $('announcement').textContent = `${count} vastaa hakua. ${selection}${cleared}`;
       });
       $('clear-search').addEventListener('click', () => {
         $('search').value = '';
@@ -191,7 +203,9 @@
         $('output-path').textContent = `projects/demos/renders/${selected}.mp4`;
         $('command').textContent = `python3 render_demo.py --dry-run ${selected}`;
         $('result').hidden = false;
-        $('announcement').textContent = `Simuloitu tarkistus valmis: ${demos[selected].title}. Komentoja ei suoritettu.`;
+        checkNumber += 1;
+        $('result-title').textContent = `Simuloitu tarkistus valmis (${checkNumber})`;
+        $('announcement').textContent = `Simuloitu tarkistus valmis: ${demos[selected].title}. Tarkistus ${checkNumber}. Komentoja ei suoritettu.`;
       });
       select(selected);
     })();

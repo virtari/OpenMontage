@@ -18,6 +18,12 @@ function open(t) {
   window.XMLHttpRequest = blocked('XMLHttpRequest');
   window.WebSocket = blocked('WebSocket');
   window.navigator.sendBeacon = blocked('sendBeacon');
+  for (const name of ['localStorage', 'sessionStorage', 'indexedDB']) {
+    Object.defineProperty(window, name, { get: blocked(name), configurable: true });
+  }
+  Object.defineProperty(window.document, 'cookie', {
+    get: blocked('cookie read'), set: blocked('cookie write'), configurable: true
+  });
   window.document.querySelectorAll('script').forEach(s => window.eval(s.textContent));
   const $ = id => window.document.getElementById(id);
   const search = value => {
@@ -31,6 +37,7 @@ test('default selection and simulated check expose the expected demo and paths',
   const { $, attempts } = open(t);
   assert.equal($('demo-id').textContent, 'code-to-screen');
   assert.equal($('run-check').disabled, false);
+  assert.match($('demo-content').textContent, /Esikatseluvideota ei ole tässä prototyypissä/);
   $('run-check').click();
   assert.equal($('result').hidden, false);
   assert.match($('result').textContent, /Simuloitu tarkistus valmis/);
@@ -58,6 +65,37 @@ test('searching the description selects the matching demo', t => {
   assert.equal($('demo-id').textContent, 'world-in-numbers');
   assert.equal($('count').textContent, '1 demo');
   assert.equal([...document.querySelectorAll('#demo-list li')].filter(li => !li.hidden).length, 1);
+});
+
+test('every visible content-type label can be used to find its demo', t => {
+  const { $, search } = open(t);
+  for (const [query, id] of [
+    ['Kehittäjän työnkulku', 'code-to-screen'],
+    ['Tuotteen pitch-esitys', 'focusflow-pitch'],
+    ['Tilastot ja kaaviot', 'world-in-numbers']
+  ]) {
+    search(query);
+    assert.equal($('count').textContent, '1 demo');
+    assert.equal($('demo-id').textContent, id);
+  }
+});
+
+test('search announces the newly selected demo and cleared simulated result', t => {
+  const { $, search } = open(t);
+  $('run-check').click();
+  search('tilasto');
+  assert.equal($('result').hidden, true);
+  assert.match($('announcement').textContent, /Valittu demo: World in Numbers/);
+  assert.match($('announcement').textContent, /tulos tyhjennetty/);
+});
+
+test('repeating a simulated check provides fresh status feedback', t => {
+  const { $ } = open(t);
+  $('run-check').click();
+  const first = $('announcement').textContent;
+  $('run-check').click();
+  assert.notEqual($('announcement').textContent, first);
+  assert.match($('announcement').textContent, /Simuloitu tarkistus valmis/);
 });
 
 test('no matches shows an empty state and reset restores the list and search focus', t => {
@@ -112,6 +150,8 @@ test('CSP hashes match the local code; no external resources or inline handlers'
   assert.match(csp, /connect-src 'none'/);
   assert.match(csp, /form-action 'none'/);
   assert.ok(!csp.includes('unsafe-inline'));
+  assert.equal(document.querySelectorAll('link, meta[http-equiv="refresh" i]').length, 0);
+  assert.doesNotMatch(document.querySelector('style').textContent, /@import|url\s*\(/i);
   for (const tag of ['style', 'script']) {
     for (const element of document.querySelectorAll(tag)) {
       const hash = crypto.createHash('sha256').update(element.textContent).digest('base64');
@@ -141,7 +181,10 @@ test('declared text palette retains at least 4.5:1 contrast on its backgrounds',
     return (Math.max(a, b) + .05) / (Math.min(a, b) + .05);
   }
   assert.equal(ratio('#000000', '#ffffff'), 21);
-  for (const [fg, bg] of [['ink', 'paper'], ['muted', 'paper'], ['ink', 'white'], ['muted', 'white'], ['muted', 'soft'], ['green', 'soft'], ['white', 'green']]) {
+  for (const [fg, bg] of [['ink', 'paper'], ['muted', 'paper'], ['ink', 'white'], ['muted', 'white'], ['muted', 'soft'], ['green', 'soft'], ['white', 'green'], ['green', 'paper'], ['green', 'white'], ['muted', 'sidebar'], ['ink', 'sidebar'], ['muted', 'preview'], ['ink', 'preview']]) {
     assert.ok(ratio(colors[fg], colors[bg]) >= 4.5, `${fg}/${bg}`);
+  }
+  for (const background of ['paper', 'white', 'soft', 'sidebar', 'preview']) {
+    assert.ok(ratio(colors.focus, colors[background]) >= 3, `focus/${background}`);
   }
 });
