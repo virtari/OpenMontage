@@ -103,6 +103,19 @@ Works with **Claude Code, Cursor, Copilot, Windsurf, Codex** — any AI coding a
 
 ## Quick Start
 
+### Quick Demo Check (Python Only)
+
+From the root of a cloned repository, with **Python 3.10+**, run these checks before `make setup`:
+
+```bash
+python3 render_demo.py --help
+python3 render_demo.py --list
+```
+
+`--help` shows the command options. `--list` shows the bundled demos: `code-to-screen`, `focusflow-pitch`, and `world-in-numbers`.
+
+Both commands use only the Python standard library. They need no API keys, Python packages, Node.js, or FFmpeg, install no dependencies, and render no videos. They check command availability and demo discovery; they do not validate rendering or replace the test suites below.
+
 ### Prerequisites
 
 - **Python 3.10+** — [python.org](https://www.python.org/downloads/)
@@ -637,6 +650,8 @@ For bugs, feature requests, and workflow discussions, use [GitHub Issues](https:
 ---
 
 ## Testing
+
+For the lightweight check that needs no dependency installation, run the `--help` and `--list` commands in [Quick Demo Check](#quick-demo-check-python-only). These checks do not render videos or run the test suites. The test commands below require the project's Python test dependencies to be installed.
 
 ```bash
 # Run contract tests (no API keys needed)
