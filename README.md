@@ -125,6 +125,14 @@ python3 render_demo.py --dry-run
 
 With a name, `--dry-run` previews one demo; without a name, it previews all demos. It checks that each props file contains a nonempty `cuts` list. It does not install dependencies, start a renderer, create output directories, or write videos, and needs only the Python standard library. It does not verify that a video can render successfully. Running without `--list` or `--dry-run` uses the normal render path and can install Remotion dependencies and write videos.
 
+To check how an unknown demo name is rejected:
+
+```bash
+python3 render_demo.py --dry-run not-a-demo
+```
+
+This exits with status `1` and reports `Unknown demo 'not-a-demo'. Available demos: code-to-screen, focusflow-pitch, world-in-numbers`. Invalid input fails before setup or rendering, without installing dependencies or creating output directories.
+
 To choose where demo videos will be written, use `--output-dir`:
 
 ```bash
