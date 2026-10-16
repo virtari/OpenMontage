@@ -102,6 +102,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("demo", nargs="?", help="Render one named demo instead of all demos.")
     parser.add_argument("--list", action="store_true", help="List available demo fixtures and exit.")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Validate and preview selected demos without setup or rendering."
+    )
     args = parser.parse_args(argv)
 
     demos = discover_demos()
@@ -119,9 +122,19 @@ def main(argv: list[str] | None = None) -> int:
         available = ", ".join(demos)
         raise SystemExit(f"Unknown demo '{args.demo}'. Available demos: {available}")
 
-    npx_cmd = ensure_demo_environment()
     selected = {args.demo: demos[args.demo]} if args.demo else demos
 
+    if args.dry_run:
+        for props_path in selected.values():
+            validate_props_file(props_path)
+        print("Dry run: no dependencies installed and no videos rendered.")
+        for name, props_path in selected.items():
+            print(f"Demo:   {name}")
+            print(f"Props:  {props_path}")
+            print(f"Output: {OUTPUT_DIR / f'{name}.mp4'}")
+        return 0
+
+    npx_cmd = ensure_demo_environment()
     for name, props_path in selected.items():
         render_demo(name, props_path, npx_cmd)
 

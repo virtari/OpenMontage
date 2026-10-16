@@ -116,6 +116,15 @@ python3 render_demo.py --list
 
 Both commands use only the Python standard library. They need no API keys, Python packages, Node.js, or FFmpeg, install no dependencies, and render no videos. They check command availability and demo discovery; they do not validate rendering or replace the test suites below.
 
+To validate the demo props and preview the input and output paths before rendering:
+
+```bash
+python3 render_demo.py --dry-run code-to-screen
+python3 render_demo.py --dry-run
+```
+
+With a name, `--dry-run` previews one demo; without a name, it previews all demos. It checks that each props file contains a nonempty `cuts` list. It does not install dependencies, start a renderer, create output directories, or write videos, and needs only the Python standard library. It does not verify that a video can render successfully. Running without `--list` or `--dry-run` uses the normal render path and can install Remotion dependencies and write videos.
+
 ### Prerequisites
 
 - **Python 3.10+** — [python.org](https://www.python.org/downloads/)
@@ -650,6 +659,12 @@ For bugs, feature requests, and workflow discussions, use [GitHub Issues](https:
 ---
 
 ## Testing
+
+Run the demo command tests with only the Python standard library:
+
+```bash
+python3 -m unittest tests.test_render_demo -v
+```
 
 For the lightweight check that needs no dependency installation, run the `--help` and `--list` commands in [Quick Demo Check](#quick-demo-check-python-only). These checks do not render videos or run the test suites. The test commands below require the project's Python test dependencies to be installed.
 
