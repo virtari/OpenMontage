@@ -13,7 +13,7 @@ function open(t) {
   t.after(() => dom.window.close());
   const { window } = dom;
   const attempts = [];
-  const blocked = name => () => { attempts.push(name); throw Error(`Unexpected ${name}`); };
+  const blocked = name => function () { attempts.push(name); throw Error(`Unexpected ${name}`); };
   window.fetch = blocked('fetch');
   window.XMLHttpRequest = blocked('XMLHttpRequest');
   window.WebSocket = blocked('WebSocket');
