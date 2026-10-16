@@ -50,6 +50,61 @@ class DemoCommandTests(unittest.TestCase):
             self.assertIn(str(self.props / f"{name}.json"), output)
             self.assertIn(str(self.output / f"{name}.mp4"), output)
 
+    def test_dry_run_shows_absolute_output_directory_without_creating_it(self):
+        destination = self.root / "custom output"
+        output = self.run_preview("--dry-run", "alpha", "--output-dir", str(destination))
+        self.assertIn(str(destination / "alpha.mp4"), output)
+        self.assertFalse(destination.exists())
+
+    def test_relative_output_directory_is_based_on_command_working_directory(self):
+        with patch("os.getcwd", return_value=str(self.root)):
+            output = self.run_preview("--dry-run", "alpha", "--output-dir", "relative output")
+        self.assertIn(str(self.root / "relative output" / "alpha.mp4"), output)
+        self.assertFalse((self.root / "relative output").exists())
+
+    def test_list_does_not_create_custom_output_directory(self):
+        destination = self.root / "list output"
+        output = self.run_preview("--list", "--output-dir", str(destination))
+        self.assertIn("alpha", output)
+        self.assertFalse(destination.exists())
+
+    def test_existing_file_as_output_directory_fails_before_setup(self):
+        destination = self.root / "keep.mp4"
+        destination.write_bytes(b"existing user file")
+        for args in (["alpha"], ["--dry-run", "alpha"]):
+            with self.subTest(args=args):
+                with self.assertRaisesRegex(SystemExit, "not a directory"):
+                    self.run_preview(*args, "--output-dir", str(destination))
+                self.assertEqual(destination.read_bytes(), b"existing user file")
+        self.assertFalse(self.output.exists())
+
+    def test_render_creates_the_selected_nested_output_directory(self):
+        destination = self.root / "new dir" / "out"
+        with patch.object(render_demo, "ensure_demo_environment", return_value="npx"):
+            with patch.object(render_demo.subprocess, "run", return_value=None):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(render_demo.main(["alpha", "--output-dir", str(destination)]), 0)
+        self.assertTrue(destination.is_dir())
+        self.assertFalse(self.output.exists())
+
+    def test_render_passes_spaced_output_as_one_argument_and_keeps_existing_files(self):
+        destination = self.root / "render output"
+        destination.mkdir()
+        existing = destination / "keep.mp4"
+        existing.write_bytes(b"existing user file")
+        calls = []
+        with patch.object(render_demo, "ensure_demo_environment", return_value="npx"):
+            with patch.object(render_demo.subprocess, "run", side_effect=lambda args, **kwargs: calls.append((args, kwargs))):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(render_demo.main(["alpha", "--output-dir", str(destination)]), 0)
+        self.assertEqual(len(calls), 1)
+        command, kwargs = calls[0]
+        self.assertIsInstance(command, list)
+        self.assertEqual(command[5], str(destination / "alpha.mp4"))
+        self.assertEqual(kwargs, {"cwd": render_demo.COMPOSER_DIR, "check": True})
+        self.assertEqual(existing.read_bytes(), b"existing user file")
+        self.assertFalse(self.output.exists())
+
     def test_dry_run_rejects_invalid_props_before_setup(self):
         (self.props / "alpha.json").write_text('{"cuts": []}', encoding="utf-8")
         with self.assertRaisesRegex(SystemExit, "at least one cut"):
@@ -76,7 +131,7 @@ class DemoCommandTests(unittest.TestCase):
         with patch.object(render_demo, "ensure_demo_environment", return_value="npx"):
             with patch.object(render_demo, "render_demo", side_effect=lambda *args: calls.append(args)):
                 self.assertEqual(render_demo.main(["beta"]), 0)
-        self.assertEqual(calls, [("beta", self.props / "beta.json", "npx")])
+        self.assertEqual(calls, [("beta", self.props / "beta.json", "npx", self.output)])
 
 
 if __name__ == "__main__":
