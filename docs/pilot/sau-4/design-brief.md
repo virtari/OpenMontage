@@ -1,6 +1,6 @@
 # SAU-4: demojen selaamisen suunnittelukoe
 
-16.10.2026 · vaihe: suunnan valinta · ei toteutushyväksyntää prototyypille
+16.10.2026 · vaihe: A-prototyypin toteutus hyväksytty; visuaalinen hyväksyntä avoinna
 
 ## Käyttäjän tavoite ja onnistuminen
 
@@ -22,7 +22,7 @@ Kummassakin käytetään samoja demoja, samaa käyttäjäpolkua ja samoja turval
 
 `options.html` näyttää kaksi staattista visuaalista luonnosta ja niiden perustelut. Siinä ei ole JavaScriptiä, oikeita demopainikkeita, palvelukutsuja, etäfontteja tai ulkoisia resursseja. Kuviot ovat CSS-kuvitusta; ne eivät ole renderöityjä demovideoita. Sivun sisäiset vertailulinkit toimivat, mutta kuvituksen toimintoelementit eivät käynnistä mitään.
 
-Arilta tarvitaan **A:n tai B:n valinta**, tai konkreettinen muutos toiseen niistä. Suositus on A: kolme demoa mahtuu yksinkertaiseen työpöytään, ja valitun sisällön sekä seuraavan askeleen suhde näkyy heti.
+Ari valitsi **A:n** suoralla viestillä: ”Otetaan A ja jatka sen toteutusta sovitulla mallilla.” Valinta ja toteutuslupa on kirjattu SAU-4:n auditointitietoihin. B säilyy vertailuaineistona, eikä sitä toteuteta.
 
 ## Valinnan jälkeen
 
@@ -35,3 +35,9 @@ GitHub: https://github.com/virtari/OpenMontage/issues/7 · Paperclip: SAU-4. Pai
 ## Esitysaineisto ja varmennuksen rajat
 
 `options-overview.png` on samoista vaihtoehdoista tehty staattinen havainnekuva, ei HTML-sivun kuvakaappaus. Kuva tarkastettiin visuaalisesti; tekstit ja molemmat asettelut näkyvät kokonaan. HTML:n rakenne, ankkurit, demojen nimet sekä skriptien ja ulkoisten resurssien puuttuminen tarkistettiin. Paikallisen HTML-tiedoston avaaminen selainautomaatiolla estettiin protokollasäännöllä. Sääntöä ei kierretty; HTML avattiin Codexin tiedostopaneeliin ja vertailua varten tuotettiin paikallinen kuva. HTML:n selainasettelua tai prototyypin saavutettavuutta ei ole vielä varmennettu.
+
+## Valittu toteutus
+
+`prototype.html` toteuttaa A:n yhtenä paikallisena HTML-tiedostona. Toiminnot ovat demon valinta, haku ja tyhjä tila, palautus sekä välitön simuloitu tarkistustulos. Tulos nollautuu demon vaihtuessa. Esikatseluvideon puuttuminen kerrotaan suoraan. Ei oikeita komentoja, demotiedostojen lukua, kirjoituksia tai verkkokutsuja. Sisällön suojauskäytäntö sallii vain tiedoston omat hashilla nimetyt tyylit ja skriptin.
+
+`prototype.test.cjs` tarkistaa toimintoja jo asennetulla jsdomilla. Se ei ole selain eikä asettelumoottori. Katso erillinen `prototype-readme.md`: ihmisen käyttöskenaario, 360/1280-varmennus, kuvakaappaukset, visuaalinen hyväksyntä ja G4 ovat vielä avoinna.
