@@ -112,8 +112,19 @@ class DemoCommandTests(unittest.TestCase):
         self.assertFalse(self.output.exists())
 
     def test_dry_run_rejects_unknown_demo_before_setup(self):
-        with self.assertRaisesRegex(SystemExit, "Unknown demo"):
-            self.run_preview("--dry-run", "missing")
+        for args in (["missing"], ["--dry-run", "missing"]):
+            with self.subTest(args=args):
+                before = sorted(self.root.rglob("*"))
+                with patch.object(render_demo, "render_demo", side_effect=AssertionError("unexpected render")):
+                    with self.assertRaises(SystemExit) as result:
+                        self.run_preview(*args)
+                self.assertFalse(self.output.exists())
+                self.assertEqual(sorted(self.root.rglob("*")), before)
+                self.assertEqual(
+                    result.exception.code,
+                    "Unknown demo 'missing'. Available demos: alpha, beta\n"
+                    "Run 'python3 render_demo.py --list' to see available demos.",
+                )
 
     def test_list_still_avoids_setup_and_output_creation(self):
         output = self.run_preview("--list")

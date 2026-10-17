@@ -124,7 +124,10 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.demo and args.demo not in demos:
         available = ", ".join(demos)
-        raise SystemExit(f"Unknown demo '{args.demo}'. Available demos: {available}")
+        raise SystemExit(
+            f"Unknown demo '{args.demo}'. Available demos: {available}\n"
+            "Run 'python3 render_demo.py --list' to see available demos."
+        )
 
     selected = {args.demo: demos[args.demo]} if args.demo else demos
     output_dir = args.output_dir.absolute()
