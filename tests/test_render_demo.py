@@ -190,7 +190,7 @@ class DemoCliSubprocessTests(unittest.TestCase):
                     self.assertFalse((root / "projects" / "demos" / "renders").exists())
                     self.assertFalse((composer / "node_modules").exists())
                     self.assertEqual(snapshot(), before)
-                    self.assertEqual(result.returncode, 2)
+                    self.assertEqual(result.returncode, 1)
 
 
 if __name__ == "__main__":
