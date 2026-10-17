@@ -131,7 +131,14 @@ To check how an unknown demo name is rejected:
 python3 render_demo.py --dry-run not-a-demo
 ```
 
-This exits with status `1` and reports `Unknown demo 'not-a-demo'. Available demos: code-to-screen, focusflow-pitch, world-in-numbers`. Invalid input fails before setup or rendering, without installing dependencies or creating output directories.
+This exits with status `1` and reports:
+
+```text
+Unknown demo 'not-a-demo'. Available demos: code-to-screen, focusflow-pitch, world-in-numbers
+Run 'python3 render_demo.py --list' to see available demos.
+```
+
+Invalid input fails before setup or rendering, without installing dependencies or creating output directories.
 
 To choose where demo videos will be written, use `--output-dir`:
 
