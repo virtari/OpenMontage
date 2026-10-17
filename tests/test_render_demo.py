@@ -3,6 +3,9 @@ import contextlib
 import io
 import json
 from pathlib import Path
+import shutil
+import subprocess
+import sys
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -143,6 +146,51 @@ class DemoCommandTests(unittest.TestCase):
             with patch.object(render_demo, "render_demo", side_effect=lambda *args: calls.append(args)):
                 self.assertEqual(render_demo.main(["beta"]), 0)
         self.assertEqual(calls, [("beta", self.props / "beta.json", "npx", self.output)])
+
+
+class DemoCliSubprocessTests(unittest.TestCase):
+    def test_unknown_demo_exits_without_changing_fixture_tree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            script = root / "render_demo.py"
+            shutil.copyfile(Path(render_demo.__file__).resolve(), script)
+            composer = root / "remotion-composer"
+            props = composer / "public" / "demo-props"
+            props.mkdir(parents=True)
+            for name in ("alpha", "beta"):
+                (props / f"{name}.json").write_text(
+                    json.dumps({"cuts": [{"type": "title"}]}), encoding="utf-8"
+                )
+
+            def snapshot():
+                return {
+                    path.relative_to(root).as_posix(): (
+                        path.read_bytes() if path.is_file() else None
+                    )
+                    for path in root.rglob("*")
+                }
+
+            before = snapshot()
+            for args in (["missing"], ["--dry-run", "missing"]):
+                with self.subTest(args=args):
+                    result = subprocess.run(
+                        [str(Path(sys.executable).resolve()), "-B", str(script), *args],
+                        cwd=root,
+                        env={"PATH": "", "PYTHONDONTWRITEBYTECODE": "1"},
+                        capture_output=True,
+                        text=True,
+                        timeout=10,
+                    )
+                    self.assertEqual(result.stdout, "")
+                    self.assertEqual(
+                        result.stderr,
+                        "Unknown demo 'missing'. Available demos: alpha, beta\n"
+                        "Run 'python3 render_demo.py --list' to see available demos.\n",
+                    )
+                    self.assertFalse((root / "projects" / "demos" / "renders").exists())
+                    self.assertFalse((composer / "node_modules").exists())
+                    self.assertEqual(snapshot(), before)
+                    self.assertEqual(result.returncode, 2)
 
 
 if __name__ == "__main__":
