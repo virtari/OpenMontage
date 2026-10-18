@@ -37,6 +37,7 @@ Paikalliset nopeat tarkistukset:
 
 ```sh
 python3 -B -m unittest tests.test_quality_gate tests.test_render_demo -v
+python3 -B tests/prove_gate_mutations.py
 npm ci --ignore-scripts --no-audit --no-fund --prefix tests/ui
 NODE_PATH="$PWD/tests/ui/node_modules" node --test docs/pilot/sau-4/prototype.test.cjs
 ```

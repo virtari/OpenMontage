@@ -46,6 +46,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -B -m unittest tests.test_quality_gate -v
+      - run: python -B tests/prove_gate_mutations.py
 
   cli:
     needs: classify
