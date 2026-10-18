@@ -1,5 +1,7 @@
 # A-prototyypin kokeilu
 
+> Historiallinen pilottiohje 16.10.2026. Arin tuotehyväksyntä säilyy. Uusissa kehitystehtävissä noudatetaan [nykyistä kehitysmallia](../../DEVELOPMENT.md): agentti vastaa teknisestä QA:sta, eikä alla kuvattua vanhaa ihmisen tarkistuslistaa vaadita uudelleen hyväksynnän ehdoksi. Aiemmin todentamattomia kokeita ei kuitenkaan merkitä jälkikäteen tehdyiksi.
+
 Ari valitsi listan ja tietopaneelin yhdistelmän 16.10.2026. `prototype.html` on yksi paikallinen HTML-tiedosto: avaa se itse selaimessa. Erillistä palvelinta tai asennusta ei tarvita. Valinnat katoavat sivun uudelleenlatauksessa. `options.html` ja `options-overview.png` säilyvät aiempien luonnosten vertailuaineistona.
 
 ## Mitä voi kokeilla
