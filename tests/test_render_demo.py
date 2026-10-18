@@ -171,7 +171,7 @@ class DemoCliSubprocessTests(unittest.TestCase):
 
             before = snapshot()
             result = subprocess.run(
-                [str(Path(sys.executable).resolve()), "-B", str(script), "--help"],
+                [str(Path(sys.executable).absolute()), "-B", str(script), "--help"],
                 cwd=root,
                 env={"PATH": "", "PYTHONDONTWRITEBYTECODE": "1"},
                 capture_output=True,
@@ -181,6 +181,7 @@ class DemoCliSubprocessTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0)
             self.assertIn("usage:", result.stdout.lower())
             self.assertIn("--help", result.stdout)
+            self.assertIn("--dry-run", result.stdout)
             self.assertEqual(result.stderr, "")
             self.assertFalse((root / "projects" / "demos" / "renders").exists())
             self.assertFalse((composer / "node_modules").exists())
@@ -211,7 +212,7 @@ class DemoCliSubprocessTests(unittest.TestCase):
             for args in (["missing"], ["--dry-run", "missing"]):
                 with self.subTest(args=args):
                     result = subprocess.run(
-                        [str(Path(sys.executable).resolve()), "-B", str(script), *args],
+                        [str(Path(sys.executable).absolute()), "-B", str(script), *args],
                         cwd=root,
                         env={"PATH": "", "PYTHONDONTWRITEBYTECODE": "1"},
                         capture_output=True,
