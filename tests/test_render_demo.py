@@ -149,6 +149,43 @@ class DemoCommandTests(unittest.TestCase):
 
 
 class DemoCliSubprocessTests(unittest.TestCase):
+    def test_help_exits_without_changing_fixture_tree(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            script = root / "render_demo.py"
+            shutil.copyfile(Path(render_demo.__file__).resolve(), script)
+            composer = root / "remotion-composer"
+            props = composer / "public" / "demo-props"
+            props.mkdir(parents=True)
+            (props / "alpha.json").write_text(
+                json.dumps({"cuts": [{"type": "title"}]}), encoding="utf-8"
+            )
+
+            def snapshot():
+                return {
+                    path.relative_to(root).as_posix(): (
+                        path.read_bytes() if path.is_file() else None
+                    )
+                    for path in root.rglob("*")
+                }
+
+            before = snapshot()
+            result = subprocess.run(
+                [str(Path(sys.executable).resolve()), "-B", str(script), "--help"],
+                cwd=root,
+                env={"PATH": "", "PYTHONDONTWRITEBYTECODE": "1"},
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            self.assertEqual(result.returncode, 0)
+            self.assertIn("usage:", result.stdout.lower())
+            self.assertIn("--help", result.stdout)
+            self.assertEqual(result.stderr, "")
+            self.assertFalse((root / "projects" / "demos" / "renders").exists())
+            self.assertFalse((composer / "node_modules").exists())
+            self.assertEqual(snapshot(), before)
+
     def test_unknown_demo_exits_without_changing_fixture_tree(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
