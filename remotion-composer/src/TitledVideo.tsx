@@ -19,7 +19,7 @@ const { fontFamily } = loadFont("normal", {
   subsets: ["latin"],
 });
 
-export interface TitledVideoProps {
+export type TitledVideoProps = {
   videoSrc: string;
   tagline: string;
   // When the tagline starts animating in, in seconds from the start of the video.
@@ -32,7 +32,7 @@ export interface TitledVideoProps {
   fontSize?: number;
   // Accent color used for the underline and the glow halo.
   accentColor?: string;
-}
+};
 
 // Resolve asset path — handle URLs, absolute paths, and public/ relative paths.
 // Mirrors the helper in Explainer.tsx so absolute Windows/Unix paths work.
