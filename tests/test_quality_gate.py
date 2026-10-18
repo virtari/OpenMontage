@@ -2,6 +2,8 @@
 import copy
 import importlib.util
 import json
+import os
+import tempfile
 from pathlib import Path
 import subprocess
 import sys
@@ -21,12 +23,68 @@ class GateCliTests(unittest.TestCase):
         self.assertFalse((ROOT / 'NEVER').exists())
 
 
+    def test_ci_plan_binds_the_real_checkout_even_under_python_optimization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            subprocess.run(['git', 'init', '-q'], cwd=root, check=True)
+            (root / 'README.md').write_text('base')
+            def commit(message):
+                subprocess.run(['git', 'add', '.'], cwd=root, check=True)
+                subprocess.run(['git', '-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid',
+                                'commit', '-qm', message], cwd=root, check=True)
+                return subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip()
+            base = commit('base')
+            (root / 'README.md').write_text('changed')
+            intermediate = commit('change')
+            (root / 'README.md').write_text('third version')
+            head = commit('next change')
+            env = {**os.environ, 'BASE_SHA': base, 'HEAD_SHA': head,
+                   'GITHUB_OUTPUT': str(root / 'github-output'), 'PYTHONOPTIMIZE': '1'}
+            result = subprocess.run([sys.executable, '-B', str(SCRIPT), 'ci-plan'], cwd=root,
+                                    env=env, capture_output=True, text=True, timeout=5)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(json.loads(result.stdout)['jobs'], ['gate-tests'])
+            self.assertTrue((root / 'github-output').read_text().startswith('plan='))
+            before = (root / 'github-output').read_text()
+            for wrong in (intermediate, 'not-a-sha', '0' * 40):
+                env['HEAD_SHA'] = wrong
+                result = subprocess.run([sys.executable, '-B', str(SCRIPT), 'ci-plan'], cwd=root,
+                                        env=env, capture_output=True, text=True, timeout=5)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual((root / 'github-output').read_text(), before)
+
+    def test_ci_gate_rejects_failed_classifier_even_when_test_jobs_are_green(self):
+        needs = {j: {'result': 'success'} for j in ('gate-tests', 'cli', 'ui', 'runtime', 'composer')}
+        needs['classify'] = {'result': 'success', 'outputs': {'plan': json.dumps({'jobs': ['gate-tests']})}}
+        def run(data):
+            return subprocess.run([sys.executable, '-B', str(SCRIPT), 'ci-gate'],
+                                  input=json.dumps(data), capture_output=True, text=True, timeout=5)
+        self.assertEqual(run(needs).returncode, 0)
+        for status in ('failure', 'skipped', 'cancelled'):
+            needs['classify']['result'] = status
+            self.assertNotEqual(run(needs).returncode, 0)
+        del needs['classify']
+        self.assertNotEqual(run(needs).returncode, 0)
+
+
 class PolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         spec = importlib.util.spec_from_file_location('quality_gate', SCRIPT)
         cls.gate = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(cls.gate)
+
+    def test_workflow_or_gate_policy_change_exercises_every_defined_job(self):
+        for path in ['.github/workflows/quality.yml', 'scripts/quality_gate.py']:
+            with self.subTest(path=path):
+                self.assertEqual(self.gate.classify([path])['jobs'], list(self.gate.JOBS))
+
+    def test_all_shared_development_instructions_are_governance(self):
+        for path in ['docs/DEVELOPMENT.md', 'AGENT_GUIDE.md', 'PROJECT_CONTEXT.md', 'CURSOR.md', 'COPILOT.md']:
+            with self.subTest(path=path):
+                self.assertIn('governance', self.gate.classify([path])['risks'])
+                self.assertIn('cli', self.gate.classify([path])['jobs'])
+        self.assertEqual(self.gate.classify(['docs/guide.md', 'docs/diagram.svg'])['jobs'], ['gate-tests'])
 
     def test_mixed_diff_keeps_all_required_checks(self):
         plan = self.gate.classify(['docs/readme.md', 'render_demo.py', 'docs/pilot/sau-4/prototype.html'])
@@ -86,10 +144,14 @@ class PolicyTests(unittest.TestCase):
             bad = copy.deepcopy(record); bad[key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.gate.verify(bad, head, ['render_demo.py'], 'independent-session')
-        for key, value in (('session_id', 'implementer'), ('model', 'sonnet'), ('reviewer', 'codex')):
+        for key, value in (('session_id', 'implementer'), ('model', 'sonnet'), ('model', 'opus'), ('reviewer', 'codex')):
             bad = copy.deepcopy(record); bad['review'][key] = value
             with self.subTest(key=key), self.assertRaises(ValueError):
                 self.gate.verify(bad, head, ['render_demo.py'], 'independent-session')
+        for absent in (None, ''):
+            bad = copy.deepcopy(record); bad['review']['session_id'] = absent
+            with self.subTest(session=absent), self.assertRaises(ValueError):
+                self.gate.verify(bad, head, ['render_demo.py'], absent)
         bad = copy.deepcopy(record); bad['jobs']['cli']['head'] = 'b' * 40
         with self.assertRaises(ValueError):
             self.gate.verify(bad, head, ['render_demo.py'], 'independent-session')

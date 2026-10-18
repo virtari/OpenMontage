@@ -4,6 +4,8 @@ This validates data, not its provenance. The delivery controller must obtain
 check results and the original reviewer output independently of the PR author.
 """
 import json
+import os
+import subprocess
 import re
 from pathlib import PurePosixPath
 import sys
@@ -22,8 +24,12 @@ def classify(paths):
         path = PurePosixPath(name)
         if path.is_absolute() or any(p in ('', '.', '..') for p in name.split('/')):
             raise ValueError('Unsafe path')
-        if name.startswith('.github/') or name == 'scripts/quality_gate.py' or name in (
+        if name.startswith('.github/workflows/') or name == 'scripts/quality_gate.py':
+            risks.add('governance')
+            required.update(JOBS)
+        elif name.startswith('.github/') or name in (
             'AGENTS.md', 'CLAUDE.md', 'CODEX.md', 'AGENT_GUIDE.md',
+            'PROJECT_CONTEXT.md', 'COPILOT.md', 'CURSOR.md', 'docs/DEVELOPMENT.md',
             'tests/test_quality_gate.py', 'Makefile', '.gitignore',
         ):
             risks.add('governance')
@@ -85,19 +91,36 @@ def verify(record, head, paths, expected_session):
     model = review.get('model', '')
     if (not expected_session or review.get('session_id') != expected_session
             or review.get('reviewer') != 'claude-cli'
-            or not (model == 'opus' or model.startswith('claude-opus-'))):
+            or not isinstance(model, str) or not model.startswith('claude-opus-')):
         raise ValueError('Reviewer identity, session or Opus model mismatch')
     review_ready(review.get('text'), head)
 
 
 def main(argv):
-    if argv == ['aggregate']:
-        data = json.load(sys.stdin)
-        aggregate(data['selected'], data['jobs'])
+    if argv == ['ci-gate']:
+        needs = json.load(sys.stdin)
+        if needs['classify']['result'] != 'success':
+            raise ValueError('Classification not successful')
+        selected = json.loads(needs['classify']['outputs']['plan'])['jobs']
+        aggregate(selected, {j: needs[j] for j in JOBS})
         print('QUALITY_GATE_PASS')
         return
+    if argv == ['ci-plan']:
+        base, head = os.environ['BASE_SHA'], os.environ['HEAD_SHA']
+        if any(not re.fullmatch('[0-9a-f]{40}', value) or value == '0' * 40 for value in (base, head)):
+            raise ValueError('Invalid commit identity')
+        if subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip() != head:
+            raise ValueError('Checkout does not match expected head')
+        raw = subprocess.check_output(['git', 'diff', '--name-only', '--no-renames', '-z', base + '...' + head])
+        if not raw.endswith(b'\0'):
+            raise ValueError('Missing diff paths')
+        plan = json.dumps(classify(raw[:-1].decode('utf-8').split('\0')))
+        with open(os.environ['GITHUB_OUTPUT'], 'a') as output:
+            output.write('plan=' + plan + '\n')
+        print(plan)
+        return
     if argv != ['classify']:
-        raise ValueError('Expected: classify or aggregate')
+        raise ValueError('Expected: classify, ci-plan or ci-gate')
     raw = sys.stdin.buffer.read()
     if not raw.endswith(b'\0'):
         raise ValueError('Expected a nonempty NUL-terminated path list')
@@ -107,6 +130,6 @@ def main(argv):
 if __name__ == '__main__':
     try:
         main(sys.argv[1:])
-    except (ValueError, UnicodeError, KeyError, TypeError, AttributeError) as error:
+    except (ValueError, UnicodeError, KeyError, TypeError, AttributeError, OSError, subprocess.CalledProcessError) as error:
         print(str(error), file=sys.stderr)
         raise SystemExit(1)

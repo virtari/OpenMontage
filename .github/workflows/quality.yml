@@ -31,18 +31,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          python - <<'PYCODE'
-          import json, os, re, subprocess
-          for key in ['BASE_SHA', 'HEAD_SHA']:
-              assert re.fullmatch('[0-9a-f]{40}', os.environ[key]), 'Invalid commit identity'
-          assert subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip() == os.environ['HEAD_SHA']
-          paths = subprocess.check_output(['git','diff','--name-only','--no-renames','-z',os.environ['BASE_SHA']+'...'+os.environ['HEAD_SHA']])
-          plan = subprocess.check_output(['python','-B','scripts/quality_gate.py','classify'],input=paths).decode().strip()
-          print(plan)
-          with open(os.environ['GITHUB_OUTPUT'],'a') as output:
-              output.write('plan='+plan+'\n')
-          PYCODE
+        run: python -B scripts/quality_gate.py ci-plan
 
   gate-tests:
     needs: classify
@@ -138,15 +127,4 @@ jobs:
           python-version: '3.12'
       - env:
           NEEDS: ${{ toJSON(needs) }}
-        run: |
-          python - <<'PYCODE'
-          import json, os, sys
-          sys.path.insert(0,'scripts')
-          import quality_gate
-          needs = json.loads(os.environ['NEEDS'])
-          if needs['classify']['result'] != 'success':
-              raise SystemExit('CLASSIFICATION_NOT_SUCCESSFUL')
-          selected = json.loads(needs['classify']['outputs']['plan'])['jobs']
-          quality_gate.aggregate(selected, {j: needs[j] for j in quality_gate.JOBS})
-          print('QUALITY_GATE_PASS')
-          PYCODE
+        run: printf '%s' "$NEEDS" | python -B scripts/quality_gate.py ci-gate
