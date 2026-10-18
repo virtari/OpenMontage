@@ -49,12 +49,11 @@ class TestTalkingHeadManifest:
 class TestGoldenScenarioArtifacts:
     """Validate golden scenario artifact samples against schemas."""
 
-    GOLDEN_PATH = PROJECT_ROOT / "eval" / "golden_scenarios" / "talking_head_basic.json"
+    GOLDEN_PATH = PROJECT_ROOT / "tests" / "eval" / "golden_scenarios" / "talking_head_basic.json"
 
     @pytest.fixture
     def golden(self):
-        if not self.GOLDEN_PATH.exists():
-            pytest.skip("Golden scenario file not found")
+        assert self.GOLDEN_PATH.is_file(), "Versioned golden scenario is missing"
         return json.loads(self.GOLDEN_PATH.read_text())
 
     def test_golden_file_structure(self, golden):

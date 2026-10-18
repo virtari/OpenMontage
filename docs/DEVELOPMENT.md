@@ -31,7 +31,7 @@ Tässä pilotissa erillistä GitHub Project -boardia ei ole perustettu. Tilasovi
 | Remotion-koodi ja sen build-riippuvuudet | Portin testit ja TypeScript-tarkistus |
 | Tuntematon polku tai epäonnistunut luokittelu | Eteneminen estyy; luokitus täydennetään katselmoituna |
 
-Sekamuutos vaatii kaikkien osien tarkistukset. `quality-gate` tarkistaa lopputulokset myös muiden jobien epäonnistuessa. Vaadittu `skipped`, `cancelled`, puuttuva tai tuntematon tulos ei ole vihreä. Luokittelijan valitsematta jättämä job saa olla `skipped`. Paikallinen fokuskoe ei korvaa valittua PR-CI:tä. CI todennetaan samalle täydelle headille, josta katselmointi on annettu. Tyhjä commit ei ole CI:n uusintamekanismi.
+Sekamuutos vaatii kaikkien osien tarkistukset. `quality-gate` tarkistaa lopputulokset myös muiden jobien epäonnistuessa. Vaadittu `skipped`, `cancelled`, puuttuva tai tuntematon tulos ei ole vihreä. Luokittelijan valitsematta jättämä job saa olla `skipped`. Paikallinen fokuskoe ei korvaa valittua PR-CI:tä. Testikohtainen ohitus ei ole sama kuin ohitettu vaadittu CI-job. Viisi vanhaa mediavertailutestiä tarvitsee ulkoisen paikallisen lähdevideon; sen puuttuessa ne raportoidaan ei-soveltuviksi ja syy näkyy `-rs`-yhteenvedossa. Niitä ei kutsuta renderöintinäytöksi. Versionhallittu golden-fixture puolestaan on pakollinen: sen puuttuminen epäonnistuu eikä ohita testiä. CI todennetaan samalle täydelle headille, josta katselmointi on annettu. Tyhjä commit ei ole CI:n uusintamekanismi.
 
 Paikalliset nopeat tarkistukset:
 
