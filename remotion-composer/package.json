@@ -9,9 +9,9 @@
   },
   "dependencies": {
     "@remotion/captions": "^4.0.441",
-    "@remotion/cli": "^4.0.441",
+    "@remotion/cli": "^4.0.540",
     "@remotion/google-fonts": "^4.0.441",
-    "@remotion/media": "^4.0.441",
+    "@remotion/media": "^4.0.540",
     "@remotion/player": "^4.0.441",
     "@remotion/transitions": "^4.0.441",
     "react": "^18.2.0",
